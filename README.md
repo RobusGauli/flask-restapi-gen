@@ -5,17 +5,20 @@ RESTful API Generator, autogenerates the RESTful endpoints from the SQL Alchemy 
 
 
 
-
+- [Install](#install)
 - [Usage](#usage)
 - [Credits](#credits)
 
 
-
+### Install
+```python
+pip install flaskrestgen
+```
 
 ### Usage
 ```python
 from flask import Flask 
-from restfulapigen import RESTApi
+from flaskrestgen import RESTApi
 from models import (
     Post,
     Comment,
