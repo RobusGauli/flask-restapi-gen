@@ -302,7 +302,11 @@ def validate(validation, data):
     for key in _keys:
         #get the val
         _val = data[key]
-        
+        data[key] = 'this is instas'
+        print(data[key], validation[key]['interpolate'])
+        if validation[key].get('interpolate', None):
+            data[key] = eval(validation[key]['interpolate'])(_val)
+
         if validation[key].get('not_null', None) and _val is None:
             return False, 'Value for key %r cannot be Null/None' %(key)
 
