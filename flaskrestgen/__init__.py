@@ -1,1 +1,1 @@
-from restfulapigen.generator import RESTApi
+from flaskrestgen.generator import RESTApi

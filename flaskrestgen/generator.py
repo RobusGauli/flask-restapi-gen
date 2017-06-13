@@ -60,6 +60,7 @@ def new_method(model_name):
 class RESTApi:
 
     def __init__(self, app, db_session, validation_file = None):
+        
         self.app = app
         self.db_session = db_session
         
@@ -75,7 +76,9 @@ class RESTApi:
                     before_response_for_resource=None, *, 
                     extract=None,
                     relationship=False,
-                    extractfor_resources=None):
+                    extractfor_resources=None,
+                    decorator_for_resources=None,
+                    decorator_for_resource=None):
 
         if not model.__mapper__.primary_key:
             raise PrimaryKeyNotFound('Primary key not found in % table' % model.__tablename__)
@@ -89,7 +92,7 @@ class RESTApi:
             results = self.db_session.query(model).all()
             
             if not extractfor_resources:
-                print('appyfor resource false')
+                
                 _list_data_exp = ({key: val for key, val in vars(r).items()
                                     if not key.startswith('_')
                                     } for r in results)
@@ -127,15 +130,19 @@ class RESTApi:
                     #finally add to the list
                     _list_data.append(adict)
                 return json_records_envelop(_list_data)
-
         _get_resources.__name__ = 'get_all' + model.__tablename__ 
 
+        if decorator_for_resources and isinstance(decorator_for_resources, 
+                                                    collections.Iterable):
+            for decorator in decorator_for_resources:
+                _get_resources = decorator(_get_resources)
+        elif decorator_for_resources:
+            _get_resources = decorator_for_resources(_get_resources)
+        
         self.app.route('/%s' % model.__tablename__)(_get_resources)
-
         
         def _get_resource(r_id):
             try:
-
                 result = self.db_session.query(model).\
                             filter(getattr(model, _primary_key) == r_id).one()
                 _data = {
@@ -171,7 +178,12 @@ class RESTApi:
                 
                 return json_records_envelop(_data)
         _get_resource.__name__ = 'get' + model.__tablename__
-
+        if decorator_for_resource and isinstance(decorator_for_resource, 
+                                                    collections.Iterable):
+            for decorator in decorator_for_resource:
+                _get_resource = decorator(_get_resource)
+        elif decorator_for_resource:
+            _get_resource = decorator_for_resource(_get_resource)
         self.app.route('/%s/<int:r_id>' % model.__tablename__)(_get_resource)
 
         if relationship:
@@ -207,7 +219,8 @@ class RESTApi:
                     
     
     def update_for(self, model, 
-                    before_response_for_resource=None):
+                    before_response_for_resource=None,
+                    decorator_for_resource=None):
         if not model.__mapper__.primary_key:
             raise PrimaryKeyNotFound('Primary key not found in % table' % model.__tablename__)
     
@@ -225,11 +238,18 @@ class RESTApi:
                 return record_updated_envelop(request.json)
 
         _update_resource.__name__ = 'put' + model.__tablename__
+        if decorator_for_resource and isinstance(decorator_for_resource,
+                                                 collections.Iterable):
+            for decorator in decorator_for_resource:
+                _update_resource = decorator(_update_resource)
+        elif decorator_for_resource:
+            _update_resource = decorator_for_resource(_update_resource)
+
         #add the route 
         self.app.route('/%s/<int:id>' % model.__tablename__, methods=['PUT'])(_update_resource)
     
 
-    def post_for(self, model):
+    def post_for(self, model, decorator_for_resource=None):
 
         def _post():
             if self._validation and model.__name__ in self._validation:
@@ -251,9 +271,16 @@ class RESTApi:
         
         #change the name of the function 
         _post.__name__ = 'post' + model.__tablename__
+
+        if decorator_for_resource and isinstance(decorator_for_resource, 
+                                        collections.Iterable):
+            for decorator in decorator_for_resource:
+                _post = decorator(_post)
+        elif decorator_for_resource:
+            _post = decorator_for_resource(_post)
         self.app.route('/%s' % model.__tablename__, methods=['POST'])(_post)
     
-    def delete_for(self, model):
+    def delete_for(self, model, decorator_for_resource=None):
 
         if not model.__mapper__.primary_key:
             raise PrimaryKeyNotFound('Primary Key Not Found in %s table' % model.__tablename__)
@@ -272,7 +299,13 @@ class RESTApi:
                 return record_deleted_envelop()
         
         _delete.__name__ = 'delete_' + model.__tablename__
-
+        if decorator_for_resource and isinstance(decorator_for_resource,
+                                                collections.Iterable):
+            for decorator in decorator_for_resource:
+                _delete = decorator(_delete)
+        elif decorator_for_resource:
+            _delete = decorator_for_resource(_delete)
+                
         self.app.route('/%s/<int:id>' % model.__tablename__, methods=['DELETE'])(_delete)
     
 
@@ -302,8 +335,7 @@ def validate(validation, data):
     for key in _keys:
         #get the val
         _val = data[key]
-        data[key] = 'this is instas'
-        print(data[key], validation[key]['interpolate'])
+        
         if validation[key].get('interpolate', None):
             data[key] = eval(validation[key]['interpolate'])(_val)
 
