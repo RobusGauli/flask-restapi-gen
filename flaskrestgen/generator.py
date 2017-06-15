@@ -16,7 +16,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.exc import DataError
 
-from restfulapigen.envelop import (
+from flaskrestgen.envelop import (
     fatal_error_envelop,
     json_records_envelop,
     record_updated_envelop,
@@ -28,7 +28,7 @@ from restfulapigen.envelop import (
     validation_error_envelop
 )
 
-from restfulapigen.errors import (
+from flaskrestgen.errors import (
     PrimaryKeyNotFound
 )
 
@@ -41,21 +41,6 @@ format_data_error = lambda _em : \
 
 valid_file = lambda v_file : os.path.exists(v_file) \
                     and os.path.isfile(v_file) and os.path.splitext(v_file)[1] == '.json'
-
-
-
-def new_method(model_name):
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            model_name = func
-            return model_name(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-
-
 
 class RESTApi:
 
@@ -337,9 +322,11 @@ def validate(validation, data):
         _val = data[key]
         
         if validation[key].get('interpolate', None):
+            
             data[key] = eval(validation[key]['interpolate'])(_val)
 
         if validation[key].get('not_null', None) and _val is None:
+            
             return False, 'Value for key %r cannot be Null/None' %(key)
 
         if isinstance(_val, int):
