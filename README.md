@@ -17,32 +17,56 @@ pip install flaskrestgen
 
 ### Usage
 ```python
+'''A sample declarative model using Sqlalchemy'''
+from sqlalchemy import Column, String, Integer, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+Base = declarative_base()
+
+class User(Base):
+  __tablename__ = 'users'
+
+  id = Column(Integer, primary_key=True)
+  username = Column(String(50))
+
+#engine instance
+engine = create_engine('postgres://user:postgres@localhost:5432/users')
+#create tables through your meta data
+Base.metadata.create_all(engine)
+
+#now here is the flaskrestgen api at play
 from flask import Flask 
 from flaskrestgen import RESTApi
-from models import (
-    Post,
-    Comment,
-    Profile
-)
-from my_session import db_session
+
+
 app = Flask(__name__)
+db_session = sessionmaker(engine)()
 
-my_api = RESTApi(app, db_session)
-#generate all GET, PUT, POST, DELETE methods for model
-my_api.rest_for(Comment)
+#create and instance of flaskrestgen
+restApi = RESTApi(app, db_session)
+#generates GET, POST, PUT and DELETE for User model
+restApi.rest_for(User)
+if __name__ == '__main__':
+  app.run(host='localhost', port=8000)
+  
 
-#you can also apply specific method for resource 
-#generate 'GET' support for Person model
-my_api.get_for(Person)
-#generate 'UPDATE' support for Person model
-my_api.update_for(Person)
-#generate 'GET' support for Comment model
-my_api.get_for(Comment)
-
-#BOOM!! You now have rest api endpoints
 
 ```
-
+### Endpoints
+```python
+GET http://localhost:8000/users ("users" being the name of the table)
+GET http://localhost:8000/users/<id> 
+POST http://localhost:8000/users
+    JSON Body: {
+        "username" : "newuser"
+    }
+PUT http://localhost:8000/users/<id>
+    JSON Body: {
+        "username" : "updatednewuser"
+    }
+DELETE http://localhost:8000/users/<id>
+```
 
 
 ### Credits
