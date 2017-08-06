@@ -68,6 +68,39 @@ PUT http://localhost:8000/users/<id>
 DELETE http://localhost:8000/users/<id>
 ```
 
+### Apply Constraints and Validation
+```
+Create a file called "validation.json" in your project directory
+and start applying constraints to your fields easily
+
+{
+    "User" : {
+        "username" : {
+            "max_len" : 10,
+            "min_len" : 3,
+            "not_null" : true,
+            "interpolate" : "lambda val: val.upper()"
+        }
+    }
+}
+
+Now finally point flaskrestgen instance to that validation file
+    
+    restApi = RESTApi(app, db_session, validation_file='validation.json')
+    #now you have validation in place that easily
+
+```
+
+### Advanced
+``` 
+There are more advanced usecase such as: 
+1. Placing a hook for advance manipulation for rest endpoints
+2. Auto detection of one to one, one to many many to many constraints and generating rest endpoints bidirectionally
+3. Extracting the desired foreign key resource to avoid multiple networks calls 
+and few mores..
+Finally I will be updating the docs for these advanced usecase when I have time.
+Thank you!!
+
 
 ### Credits
 Contributors are super welcome!!!!!
